@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>초등 미술 게임형 모험 파티</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pretendard Font -->
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0b0f19;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none;
+            touch-action: none;
+        }
+
+        /* 16:9 Aspect Ratio Container */
+        #app-container {
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            overflow: hidden;
+            background-color: #000;
+            flex-shrink: 0;
+            transform-origin: center center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            touch-action: manipulation;
+        }
+
+        .screen {
+            display: none;
+            width: 1920px;
+            height: 1080px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Custom inputs and disappearing placeholders */
+        .custom-input {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 3px solid #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .custom-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            background-color: #ffffff;
+        }
+        .custom-input::placeholder {
+            color: #94a3b8;
+            transition: color 0.1s ease;
+        }
+        .custom-input:focus::placeholder {
+            color: transparent;
+        }
+
+        /* 3D Card Flip styling (Exactly 130px * 170px) */
+        .card-perspective {
+            perspective: 1000px;
+            width: 130px;
+            height: 170px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+            border: 4px solid #ffffff;
+        }
+        .card-front {
+            background-color: #ffffff;
+            transform: rotateY(180deg);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .card-back {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Floating particles */
+        @keyframes float-emoji {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-500px) scale(1.5); opacity: 0; }
+        }
+        .emoji-particle {
+            position: absolute;
+            animation: float-emoji 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Stamp Slam animation */
+        @keyframes stampEffect {
+            0% { transform: scale(4) rotate(-35deg); opacity: 0; }
+            40% { transform: scale(1) rotate(-10deg); opacity: 1; filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6)); }
+            55% { transform: scale(0.85) rotate(-10deg); }
+            70% { transform: scale(1) rotate(-10deg); }
+            100% { transform: scale(1) rotate(-10deg); }
+        }
+        .animate-stamp {
+            animation: stampEffect 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Responsive tablet active touch states */
+        button, a, [role="button"] {
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .glow-pink {
+            box-shadow: 0 0 30px rgba(244, 114, 182, 0.8);
+        }
+        .text-shadow-premium {
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+
+        <!-- ==================== 1. INITIAL SCREEN (초기 화면) ==================== -->
+        <div id="screen-initial" class="screen flex flex-col items-center justify-start" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/home_bg.png?raw=true');">
+            <!-- Title Image -->
+            <div class="mt-[110px] w-[700px] flex justify-center animate-bounce duration-[3000ms]">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%83%80%EC%9D%B4%ED%8B%80.png?raw=true" alt="타이틀" class="max-w-full drop-shadow-[0_12px_24px_rgba(0,0,0,0.4)]">
+            </div>
+
+            <!-- Login Input Form -->
+            <div class="mt-[50px] w-[520px] bg-white/20 backdrop-blur-xl rounded-[40px] p-[45px] border-4 border-white/40 shadow-2xl flex flex-col gap-6">
+                <!-- ID Input -->
+                <div class="relative">
+                    <input type="text" id="input-username" placeholder="아이디" class="custom-input w-full h-[65px] px-6 rounded-2xl text-[24px] font-semibold text-slate-800 outline-none">
+                </div>
+                <!-- Password Input -->
+                <div class="relative">
+                    <input type="password" id="input-password" placeholder="비밀번호" class="custom-input w-full h-[65px] px-6 rounded-2xl text-[24px] font-semibold text-slate-800 outline-none">
+                </div>
+                <!-- Entry Code Input -->
+                <div class="relative">
+                    <input type="text" id="input-entrycode" placeholder="입장 코드" maxlength="4" class="custom-input w-full h-[65px] px-6 rounded-2xl text-[24px] font-semibold text-slate-800 outline-none">
+                </div>
+
+                <!-- Start Button (Default Gray/Disabled, turns Blue when valid) -->
+                <button type="button" id="btn-start" onclick="onStartClicked()" disabled class="w-full h-[80px] rounded-2xl text-[30px] font-black text-white shadow-lg bg-gray-400 cursor-not-allowed transition-all duration-300 transform active:scale-95 flex items-center justify-center border-4 border-white/20">
+                    시작하기
+                </button>
+
+                <!-- Navigation Links -->
+                <div class="flex justify-between items-center px-4 mt-2 text-[20px] font-extrabold text-blue-900 drop-shadow-md">
+                    <a href="https://www.tsherpa.co.kr/mo_membership/signup.html" target="_blank" class="hover:underline flex items-center gap-1">
+                        📝 회원가입
+                    </a>
+                    <button type="button" onclick="onTeacherLoginClicked()" class="hover:underline flex items-center gap-1 text-indigo-900">
+                        👩‍🏫 교사 로그인
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 2. MAIN SCREEN (메인 화면) ==================== -->
+        <div id="screen-main" class="screen" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BG_1.png?raw=true');">
+            <!-- HUD: Top-Left Title and stacked Store / Achievement buttons -->
+            <div class="absolute top-[50px] left-[50px] flex flex-col gap-6 z-10">
+                <!-- Mini Title -->
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%83%80%EC%9D%B4%ED%8B%80.png?raw=true" alt="타이틀" class="w-[300px] drop-shadow-[0_6px_12px_rgba(0,0,0,0.3)] cursor-pointer" onclick="goToScreen('screen-initial')">
+                
+                <!-- Stacked HUD Buttons (Store & Medal) -->
+                <div class="flex flex-col gap-4">
+                    <button class="w-[180px] hover:scale-105 active:scale-95 transition-transform duration-200" onclick="alert('상점 기능은 준비 중입니다!')">
+                        <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/btn_store.png?raw=true" alt="상점" class="w-full">
+                    </button>
+                    <button class="w-[180px] hover:scale-105 active:scale-95 transition-transform duration-200" onclick="alert('업적 보관함 기능은 준비 중입니다!')">
+                        <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/btn_medal.png?raw=true" alt="업적" class="w-full">
+                    </button>
+                </div>
+            </div>
+
+            <!-- HUD: Top-Right Coin Balance, Settings & Logout -->
+            <div class="absolute top-[50px] right-[50px] flex items-center gap-6 z-10">
+                <!-- Coin Indicator - Explicitly aligned to the RIGHT side of the coin icon -->
+                <div class="flex items-center gap-4 bg-amber-950/45 backdrop-blur-xl px-6 py-3 rounded-full border-4 border-amber-500/30 shadow-2xl">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/coin_.png?raw=true" alt="코인" class="w-[54px] h-[54px] object-contain">
+                    <span class="font-black text-[34px] text-yellow-400 font-mono tracking-wide text-shadow-premium" id="main-coin-text">1,250</span>
+                </div>
+                <!-- Settings Button -->
+                <button class="w-[80px] h-[80px] hover:scale-110 active:scale-90 transition-transform" onclick="alert('설정 메뉴입니다.')">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/setting.png?raw=true" alt="설정" class="w-full h-full">
+                </button>
+                <!-- Log Out Button -->
+                <button onclick="logout()" class="px-6 py-4 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-[22px] rounded-2xl shadow-lg border-2 border-white/20 transition-transform active:scale-95">
+                    로그아웃
+                </button>
+            </div>
+
+            <!-- 4 Islands Map Grid Layout with Absolute Coordinates -->
+            <!-- 1. 음악섬 (Music Island: 437px x 470px at (743, 62)) -->
+            <div class="absolute group flex flex-col items-center justify-center w-[437px] h-[470px]" style="top: 62px; left: 743px;">
+                <div class="absolute w-[300px] h-[300px] rounded-full border-4 border-dashed border-purple-400/20 group-hover:border-purple-400/50 animate-[spin_50s_linear_infinite] transition-all duration-300"></div>
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%9D%8C%EC%95%85%EC%84%AC.png?raw=true" alt="음악섬" class="w-full h-full object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]">
+                <div class="absolute bg-slate-900/90 border-2 border-purple-400/40 backdrop-blur-md px-5 py-2.5 rounded-full text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[18px] shadow-lg">
+                    🔒 음악섬 (준비 중)
+                </div>
+            </div>
+
+            <!-- 2. 홈섬 (Home Island: 556px x 512px at (726, 494)) -->
+            <div class="absolute group flex flex-col items-center justify-center w-[556px] h-[512px]" style="top: 494px; left: 726px;">
+                <div class="absolute w-[340px] h-[340px] rounded-full border-4 border-dashed border-amber-400/20 group-hover:border-amber-400/50 animate-[spin_40s_linear_infinite] transition-all duration-300"></div>
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%99%88%EC%84%AC.png?raw=true" alt="홈섬" class="w-full h-full object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]">
+                <div class="absolute bg-slate-900/90 border-2 border-amber-400/40 backdrop-blur-md px-5 py-2.5 rounded-full text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[18px] shadow-lg">
+                    🔒 홈섬 (준비 중)
+                </div>
+            </div>
+
+            <!-- 3. 체육섬 (Sports Island: 436px x 427px at (1093, 260)) -->
+            <div class="absolute group flex flex-col items-center justify-center w-[436px] h-[427px]" style="top: 260px; left: 1093px;">
+                <div class="absolute w-[300px] h-[300px] rounded-full border-4 border-dashed border-emerald-400/20 group-hover:border-emerald-400/50 animate-[spin_45s_linear_infinite] transition-all duration-300"></div>
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%B2%B4%EC%9C%A1%EC%84%AC.png?raw=true" alt="체육섬" class="w-full h-full object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]">
+                <div class="absolute bg-slate-900/90 border-2 border-emerald-400/40 backdrop-blur-md px-5 py-2.5 rounded-full text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[18px] shadow-lg">
+                    🔒 체육섬 (준비 중)
+                </div>
+            </div>
+
+            <!-- 4. 미술섬 (Art Island: 415px x 379px at (444, 308)) -->
+            <div class="absolute group flex flex-col items-center justify-center w-[415px] h-[379px]" style="top: 308px; left: 444px;">
+                <!-- Orbit Grid -->
+                <div class="absolute w-[280px] h-[280px] rounded-full border-4 border-dashed border-blue-400/30 group-hover:border-blue-400/70 animate-[spin_35s_linear_infinite] transition-all duration-300"></div>
+                <div class="absolute w-[240px] h-[240px] rounded-full bg-blue-500/5 group-hover:bg-blue-500/10 blur-2xl transition-all duration-300"></div>
+                
+                <!-- Play button asset (displayed above it on hover, matching Art Island width) -->
+                <div class="absolute -top-[70px] opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 z-20 w-[240px] flex justify-center pointer-events-auto">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EB%AF%B8%EC%88%A0%EC%84%AC%EB%B2%84%ED%8A%BC.png?raw=true" 
+                         alt="미술섬버튼" 
+                         class="w-[210px] hover:scale-110 active:scale-95 transition-transform drop-shadow-[0_10px_20px_rgba(59,130,246,0.6)] cursor-pointer"
+                         onclick="goToScreen('screen-game-lobby'); selectLobbyMode('today')">
+                </div>
+                
+                <!-- Island image (replacing with blurred version on hover - perfectly matching Art Island 415x379 viewport box & position) -->
+                <img id="art-island-img" 
+                     src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EB%AF%B8%EC%88%A0%EC%84%AC.png" 
+                     alt="미술섬" 
+                     class="w-[415px] h-[379px] object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)] cursor-pointer"
+                     onmouseover="this.src='https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EB%AF%B8%EC%88%A0%EC%84%AC%EB%B8%94%EB%9F%AC.png?raw=true'"
+                     onmouseout="this.src='https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EB%AF%B8%EC%88%A0%EC%84%AC.png?raw=true'"
+                     onclick="goToScreen('screen-game-lobby'); selectLobbyMode('today')">
+            </div>
+
+            <!-- Bottom-Right Notice Button & Overlay -->
+            <div class="absolute bottom-[50px] right-[50px] z-30 flex flex-col items-end gap-4">
+                <!-- Floating Notice Dialog Overlay -->
+                <div id="notice-overlay" class="hidden relative w-[380px] h-[280px] bg-contain bg-no-repeat bg-center drop-shadow-2xl transition-all duration-300" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/alert.png?raw=true');">
+                    <!-- Close button trigger overlaid on the top-right X area of alert.png -->
+                    <div onclick="toggleNotice(false)" class="absolute top-[12px] right-[12px] w-[50px] h-[50px] cursor-pointer rounded-full bg-transparent hover:bg-black/10 transition-colors flex items-center justify-center font-black text-[28px] text-slate-800">
+                        ✕
+                    </div>
+                </div>
+
+                <!-- Floating Action Notice Button -->
+                <button type="button" onclick="toggleNotice()" class="w-[90px] h-[90px] cursor-pointer hover:scale-110 active:scale-90 transition-all drop-shadow-lg">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/notice.png?raw=true" alt="공지" class="w-full h-full">
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== 3. GAME LOBBY SCREEN (게임 초기 화면) ==================== -->
+        <div id="screen-game-lobby" class="screen" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BG.png?raw=true');">
+            <!-- HUD: Left Home Button -->
+            <button type="button" onclick="goToScreen('screen-main')" class="absolute top-[50px] left-[50px] w-[90px] h-[90px] cursor-pointer hover:scale-105 active:scale-95 transition-all z-10">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/Rectangle%203464740.png?raw=true" alt="홈으로" class="w-full h-full object-contain">
+            </button>
+
+            <!-- HUD: Center Title -->
+            <div class="absolute top-[40px] left-1/2 transform -translate-x-1/2 w-[460px]">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/Title.png?raw=true" alt="타이틀" class="w-full">
+            </div>
+
+            <!-- HUD: Right Coin Balance (Horizontal Flex) & Settings -->
+            <div class="absolute top-[50px] right-[50px] flex items-center gap-6 z-10">
+                <div class="flex items-center gap-4 bg-amber-950/45 backdrop-blur-xl px-6 py-3 rounded-full border-4 border-amber-500/30 shadow-2xl">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/coin_.png?raw=true" alt="코인" class="w-[54px] h-[54px] object-contain">
+                    <span class="font-black text-[34px] text-yellow-400 font-mono tracking-wide text-shadow-premium" id="lobby-coin-text">1,250</span>
+                </div>
+                <button class="w-[80px] h-[80px] hover:scale-110 active:scale-90 transition-transform" onclick="alert('설정 메뉴입니다.')">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/setting.png?raw=true" alt="설정" class="w-full h-full">
+                </button>
+            </div>
+
+            <!-- Center Selection Mode Buttons (Resized to 586px * 610px) -->
+            <div class="absolute inset-x-0 top-[180px] flex justify-center gap-[80px] z-10">
+                <!-- 오늘의 학습 (586 x 610) -->
+                <button type="button" onclick="selectLobbyMode('today')" id="btn-mode-today" class="relative w-[586px] h-[610px] transition-all duration-300 transform rounded-[36px] overflow-hidden p-2 hover:scale-105 focus:outline-none">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%98%A4%EB%8A%98%EC%9D%98%20%ED%95%99%EC%8A%B5.png?raw=true" alt="오늘의 학습" class="w-full h-full object-contain rounded-[28px]">
+                    <div id="highlight-mode-today" class="absolute inset-0 border-[8px] border-yellow-400 rounded-[36px] shadow-[0_0_25px_rgba(250,204,21,0.8)] pointer-events-none transition-opacity duration-300 opacity-0"></div>
+                </button>
+                
+                <!-- 자유 학습 (586 x 610) -->
+                <button type="button" onclick="selectLobbyMode('free')" id="btn-mode-free" class="relative w-[586px] h-[610px] transition-all duration-300 transform rounded-[36px] overflow-hidden p-2 hover:scale-105 focus:outline-none">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%9E%90%EC%9C%A0%20%ED%95%99%EC%8A%B5.png?raw=true" alt="자유 학습" class="w-full h-full object-contain rounded-[28px]">
+                    <div id="highlight-mode-free" class="absolute inset-0 border-[8px] border-yellow-400 rounded-[36px] shadow-[0_0_25px_rgba(250,204,21,0.8)] pointer-events-none transition-opacity duration-300 opacity-0"></div>
+                </button>
+            </div>
+
+            <div id="lobby-preview-area" class="hidden absolute bottom-[50px] inset-x-0 flex justify-center z-20">
+                <button type="button" onclick="onEnterLobbyClicked()" class="hover:scale-105 active:scale-95 transition-transform duration-200 focus:outline-none">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%9E%85%EC%9E%A5%EB%B2%84%ED%8A%BC.png?raw=true" alt="입장버튼" class="w-[320px] object-contain">
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== 4 & 5. LOBBY DESCRIPTION SCREENS (학습 설명 화면) ==================== -->
+        <div id="screen-lobby-desc" class="screen" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BG.png?raw=true');">
+            <!-- HUD: Top-Left Back Button -->
+            <button type="button" onclick="goToScreen('screen-game-lobby')" class="absolute top-[50px] left-[50px] w-[90px] h-[90px] cursor-pointer hover:scale-105 active:scale-95 transition-all z-10">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/before.png?raw=true" alt="이전으로" class="w-full h-full object-contain">
+            </button>
+
+            <!-- HUD: Center Title Card (Resized to 492px * 126px) -->
+            <div class="absolute top-[40px] left-1/2 transform -translate-x-1/2 w-[492px] h-[126px]">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/first%20mini%20game_title.png?raw=true" alt="타이틀" class="w-full h-full object-contain">
+            </div>
+
+            <!-- HUD: Right Coin Balance (Horizontal Flex) & Settings -->
+            <div class="absolute top-[50px] right-[50px] flex items-center gap-6 z-10">
+                <div class="flex items-center gap-4 bg-amber-950/45 backdrop-blur-xl px-6 py-3 rounded-full border-4 border-amber-500/30 shadow-2xl">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/coin_.png?raw=true" alt="코인" class="w-[54px] h-[54px] object-contain">
+                    <span class="font-black text-[34px] text-yellow-400 font-mono tracking-wide text-shadow-premium" id="desc-coin-text">1,250</span>
+                </div>
+                <button class="w-[80px] h-[80px] hover:scale-110 active:scale-90 transition-transform">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/setting.png?raw=true" alt="설정" class="w-full h-full">
+                </button>
+            </div>
+
+            <!-- Center Panel Workspace Container (게임설명칸배경.png) -->
+            <div class="absolute top-[200px] left-1/2 transform -translate-x-1/2 w-[1300px] h-[640px] bg-contain bg-no-repeat bg-center flex items-center justify-between px-16" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EA%B2%8C%EC%9E%84%EC%84%A4%EB%AA%85%EC%B9%B8%EB%B0%B0%EA%B2%BD.png?raw=true');">
+                <!-- Left: Card Description (카드게임설명.png) -->
+                <div class="w-[580px] h-[480px] flex items-center justify-center">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%B9%B4%EB%93%9C%EA%B2%8C%EC%9E%84%EC%84%A4%EB%AA%85.png?raw=true" alt="카드설명" class="max-h-full max-w-full object-contain rounded-2xl drop-shadow-md">
+                </div>
+
+                <!-- Right: Lobby Room Status (플레이어배경.png) -->
+                <div class="w-[520px] h-[480px] bg-contain bg-no-repeat bg-center flex flex-col p-6" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%94%8C%EB%A0%88%EC%9D%B4%EC%96%B4%EB%B0%B0%EA%B2%BD.png?raw=true');">
+                    <!-- Player Header (플레이어타이틀.png) -->
+                    <div class="w-full flex justify-center mb-6 mt-2">
+                        <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%94%8C%EB%A0%88%EC%9D%B4%EC%96%B4%ED%83%80%EC%9D%B4%ED%8B%80.png?raw=true" alt="플레이어목록" class="w-[408px] h-[85px] object-contain">
+                    </div>
+
+                    <!-- 3-Column Responsive Mock Players Grid -->
+                    <div class="flex-1 overflow-y-auto pr-2">
+                        <div class="grid grid-cols-3 gap-4 w-full" id="lobby-players-grid">
+                            <!-- Dynamic Content Rendered in JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Center Ready Button (BTN_.png -> BTN.png) -->
+            <div class="absolute bottom-[40px] left-1/2 transform -translate-x-1/2 z-10 w-[320px]">
+                <button type="button" onclick="onReadyClicked()" class="w-full hover:scale-105 active:scale-95 transition-transform duration-200 focus:outline-none">
+                    <img id="btn-ready-img" src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BTN_.png?raw=true" alt="준비하기" class="w-full object-contain">
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== 6. GAMEPLAY SCREEN (게임 화면) ==================== -->
+        <div id="screen-gameplay" class="screen" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/game_bg.png?raw=true');">
+            <!-- HUD: Center Title (Resized to 492px * 126px) -->
+            <div class="absolute top-[30px] left-1/2 transform -translate-x-1/2 w-[492px] h-[126px]">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card%20game_title.png?raw=true" alt="카드매칭" class="w-full h-full object-contain">
+            </div>
+
+            <!-- HUD: Right Controls (Pause & Settings) -->
+            <div class="absolute top-[30px] right-[50px] flex items-center gap-6 z-20">
+                <button onclick="onPauseClicked()" class="w-[80px] h-[80px] hover:scale-110 active:scale-90 transition-transform">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/stop.png?raw=true" alt="일시정지" class="w-full h-full">
+                </button>
+                <button class="w-[80px] h-[80px] opacity-70 cursor-not-allowed">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/setting.png?raw=true" alt="설정" class="w-full h-full">
+                </button>
+            </div>
+
+            <!-- Central Workspace Area (게임배경.png - Dimensions: 1196 x 610 at (362, 200)) -->
+            <div class="absolute bg-contain bg-no-repeat bg-center" style="left: 362px; top: 200px; width: 1196px; height: 610px; background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EA%B2%8C%EC%9E%84%EB%B0%B0%EA%B2%BD.png?raw=true');">
+                
+                <!-- Left: Card Arena Board (카드배경.png - Sized 860px * 530px) -->
+                <div class="absolute bg-contain bg-no-repeat bg-center flex items-center justify-center p-4" style="left: 40px; top: 40px; width: 860px; height: 530px; background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%B9%B4%EB%93%9C%EB%B0%B0%EA%B2%BD.png?raw=true');">
+                    <!-- 2 Rows of 6 Cards Grid -->
+                    <div id="card-arena-grid" class="grid grid-cols-6 gap-x-3 gap-y-10 w-full h-full justify-items-center items-center">
+                        <!-- Rendered dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Right: Stacked Modules (Time, Score, Items positioned absolutely) -->
+                <!-- 1. Time Module (236px * 108px) -->
+                <div class="absolute bg-contain bg-no-repeat bg-center flex flex-col items-center justify-center" style="left: 920px; top: 40px; width: 236px; height: 108px; background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%8B%9C%EA%B0%8A.png?raw=true');">
+                    <!-- Timer Format strictly formatted to "00:60:00" -->
+                    <div class="text-[34px] font-black text-[#68411F] mt-4 font-mono select-none" id="game-timer-val">00:60:00</div>
+                </div>
+
+                <!-- 2. Score Module (236px * 112px) -->
+                <div class="absolute bg-contain bg-no-repeat bg-center flex flex-col items-center justify-center" style="left: 920px; top: 168px; width: 236px; height: 112px; background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%A0%90%EC%88%98.png?raw=true');">
+                    <div class="text-[34px] font-extrabold mt-4 text-center select-none">
+                        <span class="text-[#E536A5] font-black font-mono" id="game-score-val">0</span>
+                        <span class="text-[#68411F] font-black">점</span>
+                    </div>
+                    <!-- Streak Combo Toast -->
+                    <div id="combo-popup" class="opacity-0 scale-95 transition-all duration-300 text-rose-500 font-extrabold text-[16px] absolute -bottom-5 animate-pulse">
+                        🔥 콤보 스트릭!
+                    </div>
+                </div>
+
+                <!-- 3. Item Module (236px * 270px) -->
+                <div class="absolute bg-contain bg-no-repeat bg-center flex flex-col items-center p-4 justify-between" style="left: 920px; top: 300px; width: 236px; height: 270px; background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%95%84%EC%9D%B4%ED%85%9C.png?raw=true');">
+                    <!-- Title/Graphics spacing -->
+                    <div class="h-6"></div>
+                    <!-- Items Grid Layout inside Bounding Box -->
+                    <div class="flex flex-col gap-3 w-full px-4 mb-4">
+                        <button onclick="useItem('time')" class="w-full py-2 bg-white/20 hover:bg-white/30 border-2 border-white/50 rounded-2xl flex items-center justify-center gap-2 text-xl font-bold text-slate-800 shadow-md">
+                            ⏱️ <span class="text-[16px] font-black">시간 +10초</span>
+                        </button>
+                        <button onclick="useItem('reveal')" class="w-full py-2 bg-white/20 hover:bg-white/30 border-2 border-white/50 rounded-2xl flex items-center justify-center gap-2 text-xl font-bold text-slate-800 shadow-md">
+                            👁️ <span class="text-[16px] font-black">1.5초 힌트</span>
+                        </button>
+                        <button onclick="useItem('shield')" class="w-full py-2 bg-white/20 hover:bg-white/30 border-2 border-white/50 rounded-2xl flex items-center justify-center gap-2 text-xl font-bold text-slate-800 shadow-md">
+                            🛡️ <span class="text-[16px] font-black">방어 가동</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pause Modal Overlay -->
+            <div id="pause-modal" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center">
+                <div class="bg-slate-900 border-8 border-indigo-500 rounded-[50px] p-12 text-center max-w-[650px] shadow-2xl flex flex-col gap-6">
+                    <h2 class="text-[54px] font-black text-white">일시정지</h2>
+                    <p class="text-[26px] font-semibold text-slate-300 leading-relaxed">학습 게임을 잠시 멈췄습니다.<br>다시 도전할 준비가 되면 계속하기를 누르세요!</p>
+                    <div class="flex flex-col gap-4 mt-4">
+                        <button onclick="onResumeClicked()" class="w-full py-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[28px] shadow-lg transition-all transform active:scale-95">
+                            계속하기
+                        </button>
+                        <button onclick="onPauseExitClicked()" class="w-full py-5 rounded-2xl bg-slate-700 hover:bg-slate-800 text-white font-black text-[28px] shadow-md transition-all transform active:scale-95">
+                            그만하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 8. GAME OVER SCREEN (게임 종료 화면) ==================== -->
+        <div id="screen-game-over" class="screen" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/game_bg.png?raw=true');">
+            <!-- HUD: Center Title (Resized to 612px * 158px) -->
+            <div class="absolute top-[40px] left-1/2 transform -translate-x-1/2 w-[612px] h-[158px]">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EA%B2%8C%EC%9E%84%EC%A2%85%EB%A3%8C%ED%83%80%EC%9D%B4%ED%8B%80.png?raw=true" alt="게임종료" class="w-full h-full object-contain">
+            </div>
+
+            <!-- HUD: Right Coin Balance (Horizontal Flex) & Settings -->
+            <div class="absolute top-[50px] right-[50px] flex items-center gap-6 z-10">
+                <div class="flex items-center gap-4 bg-amber-950/45 backdrop-blur-xl px-6 py-3 rounded-full border-4 border-amber-500/30 shadow-2xl">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/coin_.png?raw=true" alt="코인" class="w-[54px] h-[54px] object-contain">
+                    <span class="font-black text-[34px] text-yellow-400 font-mono tracking-wide text-shadow-premium" id="gameover-coin-text">1,250</span>
+                </div>
+                <button class="w-[80px] h-[80px] opacity-70 cursor-not-allowed">
+                    <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/setting.png?raw=true" alt="설정" class="w-full h-full">
+                </button>
+            </div>
+
+            <!-- Central Content Display (Ending Container: ending_con.png) -->
+            <!-- We stack Left (Scoreboard Panel) and Right (Performance Panel) side by side over it -->
+            <div class="absolute top-[180px] left-1/2 transform -translate-x-1/2 w-[1300px] h-[720px] bg-contain bg-no-repeat bg-center flex items-center justify-between px-14 py-8" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/ending_con.png?raw=true');">
+                
+                <!-- 1. Scoreboard Panel (Background: 게임종료배경.png) -->
+                <div class="w-[560px] h-[550px] bg-contain bg-no-repeat bg-center p-8 flex flex-col items-center" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EA%B2%8C%EC%9E%84%EC%A2%85%EB%A3%8C%EB%B0%B0%EA%B2%BD.png?raw=true');">
+                    <h3 class="text-[28px] font-black text-amber-900 mb-6 drop-shadow-sm flex items-center gap-2">
+                        🏆 명예의 전당 (Top 3)
+                    </h3>
+                    
+                    <!-- Podium-Style Ranking list -->
+                    <div class="w-full flex flex-col gap-4 mt-2" id="podium-ranking-list">
+                        <!-- Generated Dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- 2. Performance Summary Panel (Background: 게임종료배경.png + Header: 학습결과타이틀.png) -->
+                <div class="w-[560px] h-[550px] bg-contain bg-no-repeat bg-center p-8 flex flex-col justify-between items-center relative" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EA%B2%8C%EC%9E%84%EC%A2%85%EB%A3%8C%EB%B0%B0%EA%B2%BD.png?raw=true');">
+                    <!-- Title Header -->
+                    <div class="w-full flex justify-center mt-2">
+                        <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%95%99%EC%8A%B5%EA%B2%B0%EA%B3%BC%ED%83%80%EC%9D%B4%ED%8B%80.png?raw=true" alt="학습결과" class="w-[280px]">
+                    </div>
+
+                    <!-- User Total Session Score -->
+                    <div class="my-auto flex flex-col items-center gap-2">
+                        <span class="text-[26px] font-extrabold text-slate-600">나의 최종 점수</span>
+                        <div class="text-[72px] font-black text-indigo-700 font-mono tracking-wide" id="gameover-total-score">
+                            0점
+                        </div>
+                        <div class="px-6 py-2 bg-yellow-100 border-2 border-yellow-400 rounded-full text-[20px] font-black text-amber-800 shadow-sm animate-pulse flex items-center gap-1">
+                            🪙 +250 코인 지급 완료!
+                        </div>
+                    </div>
+
+                    <!-- Stamp Decoration (학습도장.png) placed at bottom center -->
+                    <div class="w-[180px] h-[180px] absolute bottom-6 right-6 flex items-center justify-center pointer-events-none">
+                        <img id="stamp-img" src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%95%99%EC%8A%B5%EB%8F%84%EC%9E%A5.png?raw=true" alt="학습도장" class="w-full h-full object-contain opacity-0 scale-[3]">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <!-- Main Menu Button (BTN_main.png) -->
+            <button type="button" onclick="resetAndReturnToMain()" class="absolute bottom-[40px] left-1/2 transform -translate-x-1/2 w-[300px] h-[90px] hover:scale-105 active:scale-95 transition-all z-20 focus:outline-none">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BTN_main.png?raw=true" alt="메인으로" class="w-full h-full object-contain">
+            </button>
+
+            <!-- Cosmetic reaction button (reaction btn.png) -->
+            <button type="button" id="btn-reaction" onclick="triggerReactionEmoji()" class="absolute bottom-[50px] right-[50px] w-[90px] h-[90px] hover:scale-110 active:scale-90 transition-all z-20 focus:outline-none">
+                <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/reaction%20btn.png?raw=true" alt="리액션" class="w-full h-full object-contain">
+            </button>
+        </div>
+
+        <!-- ==================== 5. TEACHER DASHBOARD SCREEN (교사용 화면) ==================== -->
+        <div id="screen-teacher" class="screen flex flex-col bg-slate-900 text-white justify-between">
+            <!-- Header bar -->
+            <div class="w-full bg-indigo-700 h-[100px] flex items-center justify-between px-12 shadow-2xl border-b-4 border-indigo-600">
+                <h1 class="text-[36px] font-black text-white flex items-center gap-3">
+                    👩‍🏫 초등 미술 교사용 대시보드
+                </h1>
+                <button onclick="goToScreen('screen-initial')" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-[22px] rounded-2xl transition-all border-2 border-slate-700 shadow-md active:scale-95">
+                    대시보드 로그아웃
+                </button>
+            </div>
+
+            <!-- Panel Contents -->
+            <div class="flex-1 w-full max-w-[1500px] mx-auto p-12 flex gap-12 items-stretch">
+                <!-- Left: 수업 코드 & 프린트 관리 -->
+                <div class="w-[45%] flex flex-col justify-between bg-slate-800 p-8 rounded-[40px] shadow-2xl border-2 border-slate-700">
+                    <div class="flex flex-col gap-6">
+                        <h2 class="text-[28px] font-black text-slate-300">수업 참여 코드</h2>
+                        <div class="text-[80px] font-mono font-black tracking-widest text-indigo-400 bg-slate-950 border-4 border-indigo-500/30 rounded-3xl p-6 text-center shadow-inner" id="teacher-code-val">
+                            1234
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-4 mt-8">
+                        <button onclick="simulateActivitySheetsPrint()" class="w-full py-5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[24px] shadow-lg transition-transform active:scale-95 border-b-4 border-emerald-700">
+                            📄 연계 학습 활동지 인쇄하기
+                        </button>
+                        <p class="text-[18px] text-slate-400 font-bold text-center leading-relaxed">
+                            아이들이 카드 매칭 탐험을 완수한 후,<br>교실 미술 실기 활동에 활용 가능한 심화 워크시트를 인쇄합니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right: 학생 접속 현황판 -->
+                <div class="flex-1 bg-slate-800 p-8 rounded-[40px] shadow-2xl border-2 border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-[28px] font-black text-slate-300">실시간 학생 탐험 현황</h3>
+                            <span class="px-4 py-1.5 bg-indigo-500/20 text-indigo-300 font-extrabold text-[18px] rounded-full border border-indigo-500/30 animate-pulse">실시간 동기화 중</span>
+                        </div>
+                        
+                        <div class="flex flex-col gap-4" id="teacher-student-list">
+                            <!-- Populated in script -->
+                        </div>
+                    </div>
+                    
+                    <div class="text-right text-[18px] text-slate-500 font-bold">
+                        교실에 접속한 학생 정보가 실시간으로 수집됩니다.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="w-full bg-slate-950 h-[70px] flex items-center justify-center text-[18px] text-slate-500 font-extrabold border-t border-slate-800">
+                초등 미술 탐험 어드벤처 모험 파티 © 2026 Chunjae Education.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Game Module -->
+    <script>
+        // --- 1. GLOBAL STATE DEFINITION ---
+        const state = {
+            currentCoin: 1250,
+            currentScore: 0,
+            teacherAccessCode: "1234",
+            roomPlayers: [
+                { name: "김철수", profile: "", ready: false, score: 620 },
+                { name: "이영희", profile: "", ready: false, score: 740 },
+                { name: "박민수", profile: "", ready: false, score: 500 }
+            ],
+            currentUser: {
+                id: "",
+                profile: "",
+                ready: false
+            },
+            currentScreen: "screen-initial",
+            currentStudyMode: "today",
+            noticeOpen: false,
+
+            // Card Match Gameplay logic parameters
+            game: {
+                timer: 60,
+                score: 0,
+                combo: 0,
+                flippedCards: [],
+                matchedCount: 0,
+                cardsData: [],
+                timerId: null,
+                isPaused: false
+            }
+        };
+
+        // Unique profile asset paths (distribute randomly)
+        const profilePool = [
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%14%EB%A1%9C%ED%95%84_%EA%B3%B0.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%14%EB%A1%9C%ED%95%84_%EB%8B%A4%EB%9E%8C%EC%A5%90.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%14%EB%A1%9C%ED%95%84_%EC%82%AC%EC%9E%90.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%14%EB%A1%9C%ED%95%84_%EC%95%AC%EC%9A%B0.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%14%EB%A1%9C%ED%95%84_%ED%86%A0%EB%81%BC.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%ED%14%EB%A1%9C%ED%95%84_%ED%8E%AD%EA%B7%84.png?raw=true"
+        ];
+
+        // Unique Card Textures for Front side of Cards (6 unique types, duplicated to form 12 cards)
+        const cardTextures = [
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card1.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card2.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card3.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card4.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card5.png?raw=true",
+            "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/card6.png?raw=true"
+        ];
+
+        // --- 2. 16:9 RESPONSIVE VIEWPORT ENGINE ---
+        function resizeApp() {
+            const app = document.getElementById('app-container');
+            const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            app.style.transform = `scale(${scale})`;
+            
+            // Center the scaled box absolutely
+            app.style.position = 'absolute';
+            app.style.left = '50%';
+            app.style.top = '50%';
+            app.style.marginLeft = `-${(1920 * scale) / 2}px`;
+            app.style.marginTop = `-${(1080 * scale) / 2}px`;
+        }
+        window.addEventListener('resize', resizeApp);
+        window.addEventListener('load', resizeApp);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeApp, 200);
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            resizeApp();
+            goToScreen("screen-initial");
+            
+            // Form Validation on ID, Password & Code entry
+            const idInput = document.getElementById("input-username");
+            const pwInput = document.getElementById("input-password");
+            const codeInput = document.getElementById("input-entrycode");
+            const startBtn = document.getElementById("btn-start");
+
+            const checkInputs = () => {
+                const idVal = idInput.value.trim();
+                const pwVal = pwInput.value.trim();
+                const codeVal = codeInput.value.trim();
+
+                if (idVal.length > 0 && pwVal.length > 0 && codeVal.length > 0) {
+                    startBtn.disabled = false;
+                    startBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
+                    startBtn.classList.add("bg-blue-600", "hover:bg-blue-700", "cursor-pointer");
+                } else {
+                    startBtn.disabled = true;
+                    startBtn.classList.remove("bg-blue-600", "hover:bg-blue-700", "cursor-pointer");
+                    startBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+                }
+            };
+
+            idInput.addEventListener("input", checkInputs);
+            pwInput.addEventListener("input", checkInputs);
+            codeInput.addEventListener("input", checkInputs);
+
+            syncCoins();
+        });
+
+        // --- 3. DYNAMIC SYNC SERVICES ---
+        function syncCoins() {
+            const coinText = state.currentCoin.toLocaleString();
+            document.getElementById("main-coin-text").innerText = coinText;
+            document.getElementById("lobby-coin-text").innerText = coinText;
+            document.getElementById("desc-coin-text").innerText = coinText;
+            document.getElementById("gameover-coin-text").innerText = coinText;
+        }
+
+        // --- 4. NAVIGATION MODULE ---
+        function goToScreen(screenId) {
+            const screens = document.querySelectorAll(".screen");
+            screens.forEach(s => s.style.display = "none");
+
+            const current = document.getElementById(screenId);
+            if (current) {
+                if (screenId === "screen-initial" || screenId === "screen-teacher") {
+                    current.style.display = "flex";
+                } else {
+                    current.style.display = "block";
+                }
+            }
+            state.currentScreen = screenId;
+            resizeApp();
+        }
+
+        // --- 5. INITIAL SCREEN ACTIONS ---
+        function onStartClicked() {
+            const username = document.getElementById("input-username").value.trim();
+            state.currentUser.id = username;
+            
+            // Randomize and distribute characters for Screen 4 Lobby and Screen 8 Scoreboard inheritance
+            distributeLobbyProfiles();
+
+            goToScreen("screen-main");
+        }
+
+        function distributeLobbyProfiles() {
+            // Shuffle the profile pool randomly
+            const shuffled = [...profilePool].sort(() => 0.5 - Math.random());
+            
+            // Inherit profiles dynamically
+            state.currentUser.profile = shuffled[0];
+            state.roomPlayers[0].profile = shuffled[1];
+            state.roomPlayers[1].profile = shuffled[2];
+            state.roomPlayers[2].profile = shuffled[3];
+        }
+
+        function onTeacherLoginClicked() {
+            const idVal = document.getElementById("input-username").value.trim();
+            const pwVal = document.getElementById("input-password").value.trim();
+
+            // Check mock credentials
+            if (idVal === "chunjaepro" && pwVal === "chunjae2026") {
+                document.getElementById("input-username").value = "";
+                document.getElementById("input-password").value = "";
+                document.getElementById("input-entrycode").value = "";
+                document.getElementById("btn-start").disabled = true;
+                
+                // Distribute profiles just in case
+                distributeLobbyProfiles();
+                renderTeacherDashboard();
+                goToScreen("screen-teacher");
+            } else {
+                document.getElementById("input-username").value = "chunjaepro";
+                document.getElementById("input-password").value = "chunjae2026";
+                document.getElementById("input-entrycode").value = "1234";
+                
+                const event = new Event('input');
+                document.getElementById("input-username").dispatchEvent(event);
+                
+                alert("교사용 계정이 감지되지 않았습니다. 테스트 편의를 위해 로그인 입력을 교사 기본 정보로 채웠습니다. 다시 한 번 '교사 로그인' 버튼을 클릭해 주세요!");
+            }
+        }
+
+        function logout() {
+            state.currentUser.id = "";
+            document.getElementById("input-username").value = "";
+            document.getElementById("input-password").value = "";
+            document.getElementById("input-entrycode").value = "";
+            
+            const startBtn = document.getElementById("btn-start");
+            startBtn.disabled = true;
+            startBtn.classList.remove("bg-blue-600", "hover:bg-blue-700", "cursor-pointer");
+            startBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+
+            goToScreen("screen-initial");
+        }
+
+        // --- 6. MAIN MAP SCREEN ACTIONS ---
+        function toggleNotice(forceState) {
+            const overlay = document.getElementById("notice-overlay");
+            if (typeof forceState === "boolean") {
+                state.noticeOpen = forceState;
+            } else {
+                state.noticeOpen = !state.noticeOpen;
+            }
+
+            if (state.noticeOpen) {
+                overlay.classList.remove("hidden");
+                overlay.classList.add("block");
+            } else {
+                overlay.classList.remove("block");
+                overlay.classList.add("hidden");
+            }
+        }
+
+        // --- 7. GAME LOBBY ACTIONS ---
+        function selectLobbyMode(mode) {
+            state.currentStudyMode = mode;
+            const highlightToday = document.getElementById("highlight-mode-today");
+            const highlightFree = document.getElementById("highlight-mode-free");
+            const previewArea = document.getElementById("lobby-preview-area");
+
+            previewArea.classList.remove("hidden");
+
+            if (mode === "today") {
+                highlightToday.classList.remove("opacity-0");
+                highlightToday.classList.add("opacity-100");
+                highlightFree.classList.remove("opacity-100");
+                highlightFree.classList.add("opacity-0");
+            } else {
+                highlightFree.classList.remove("opacity-0");
+                highlightFree.classList.add("opacity-100");
+                highlightToday.classList.remove("opacity-100");
+                highlightToday.classList.add("opacity-0");
+            }
+        }
+
+        function onEnterLobbyClicked() {
+            // Setup description ready screen
+            state.currentUser.ready = false;
+            state.roomPlayers.forEach(p => p.ready = false);
+            
+            // Set ready image back to default unready state
+            document.getElementById("btn-ready-img").src = "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BTN_.png?raw=true";
+
+            // Reshuffle / redistribute characters on every enter lobby
+            distributeLobbyProfiles();
+            renderLobbyPlayers();
+            goToScreen("screen-lobby-desc");
+        }
+
+        // --- 8. LOBBY DESC ROOM & READY SIMULATION ---
+        function renderLobbyPlayers() {
+            const grid = document.getElementById("lobby-players-grid");
+            grid.innerHTML = "";
+
+            // Render current user first
+            const userCard = document.createElement("div");
+            userCard.className = `flex flex-col items-center p-6 rounded-3xl border-4 ${
+                state.currentUser.ready ? 'border-emerald-400 bg-emerald-500/10' : 'border-blue-400 bg-blue-500/5'
+            } transition-all duration-300 justify-center min-h-[140px]`;
+            userCard.innerHTML = `
+                <div class="text-[20px] font-black text-slate-800 truncate w-full text-center">
+                    ${state.currentUser.id || "나"} (나)
+                </div>
+                <div class="mt-3 px-3 py-1 rounded-full text-[16px] font-bold ${
+                    state.currentUser.ready ? 'bg-emerald-500 text-white' : 'bg-blue-100 text-blue-800'
+                }">
+                    ${state.currentUser.ready ? '준비 완료!' : '대기 중'}
+                </div>
+            `;
+            grid.appendChild(userCard);
+
+            // Render other 2 mock players to fit 3-column grid
+            for(let i = 0; i < 2; i++) {
+                const player = state.roomPlayers[i];
+                const playerCard = document.createElement("div");
+                playerCard.className = `flex flex-col items-center p-6 rounded-3xl border-4 ${
+                    player.ready ? 'border-emerald-400 bg-emerald-500/10' : 'border-slate-300 bg-slate-100/50'
+                } transition-all duration-300 justify-center min-h-[140px]`;
+                playerCard.innerHTML = `
+                    <div class="text-[20px] font-black text-slate-700 truncate w-full text-center">
+                        ${player.name}
+                    </div>
+                    <div class="mt-3 px-3 py-1 rounded-full text-[16px] font-bold ${
+                        player.ready ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'
+                    }">
+                        ${player.ready ? '준비 완료!' : '대기 중'}
+                    </div>
+                `;
+                grid.appendChild(playerCard);
+            }
+        }
+
+        function onReadyClicked() {
+            if (state.currentUser.ready) return;
+
+            // Set user ready
+            state.currentUser.ready = true;
+            document.getElementById("btn-ready-img").src = "https://github.com/ahhyeon-jo/art_image_orgin/blob/main/BTN.png?raw=true";
+            renderLobbyPlayers();
+
+            if (state.currentStudyMode === "today") {
+                // Simulate other players getting ready sequentially (Today's Study)
+                const delay = 600;
+                state.roomPlayers.forEach((player, index) => {
+                    setTimeout(() => {
+                        player.ready = true;
+                        renderLobbyPlayers();
+
+                        // Once the last player is ready, transition to Gameplay
+                        if (index === 1) { // 3rd player in the grid
+                            setTimeout(() => {
+                                goToScreen("screen-gameplay");
+                                initCardGame();
+                            }, 800);
+                        }
+                    }, (index + 1) * delay);
+                });
+            } else {
+                // Free Learning transitions directly after a minor visual delay
+                setTimeout(() => {
+                    goToScreen("screen-gameplay");
+                    initCardGame();
+                }, 500);
+            }
+        }
+
+        // --- 9. CARD GAMEPLAY ENGINE ---
+        function formatTimerText(seconds) {
+            const secStr = seconds.toString().padStart(2, '0');
+            return `00:${secStr}:00`;
+        }
+
+        function initCardGame() {
+            state.game.timer = 60;
+            state.game.score = 0;
+            state.game.combo = 0;
+            state.game.flippedCards = [];
+            state.game.matchedCount = 0;
+            state.game.isPaused = false;
+
+            document.getElementById("game-timer-val").innerText = formatTimerText(state.game.timer);
+            document.getElementById("game-score-val").innerText = state.game.score;
+            document.getElementById("combo-popup").style.opacity = "0";
+
+            // Prepare 12 card deck (6 pairs)
+            const deck = [];
+            for (let i = 0; i < 6; i++) {
+                deck.push({ id: i, image: cardTextures[i] });
+                deck.push({ id: i, image: cardTextures[i] });
+            }
+
+            // Shuffle
+            deck.sort(() => 0.5 - Math.random());
+            state.game.cardsData = deck;
+
+            // Render cards to Grid (enforcing 130px * 170px dimensions strictly)
+            const grid = document.getElementById("card-arena-grid");
+            grid.innerHTML = "";
+
+            deck.forEach((card, index) => {
+                const container = document.createElement("div");
+                container.className = "card-perspective cursor-pointer";
+                container.innerHTML = `
+                    <div class="card-inner w-full h-full" id="card-${index}" onclick="onCardClicked(${index})">
+                        <!-- Front Face -->
+                        <div class="card-face card-front" style="background-image: url('${card.image}');"></div>
+                        <!-- Back Face (카드뒷면.png) -->
+                        <div class="card-face card-back" style="background-image: url('https://github.com/ahhyeon-jo/art_image_orgin/blob/main/%EC%B9%B4%EB%93%9C%EB%92%B7%EB%A9%B4.png?raw=true');"></div>
+                    </div>
+                `;
+                grid.appendChild(container);
+            });
+
+            // Start Timer Count-down Loop
+            if (state.game.timerId) clearInterval(state.game.timerId);
+            state.game.timerId = setInterval(() => {
+                if (!state.game.isPaused) {
+                    state.game.timer--;
+                    document.getElementById("game-timer-val").innerText = formatTimerText(state.game.timer);
+
+                    if (state.game.timer <= 0) {
+                        terminateCardGame(false);
+                    }
+                }
+            }, 1000);
+        }
+
+        function onCardClicked(index) {
+            if (state.game.isPaused) return;
+            if (state.game.flippedCards.length >= 2) return;
+
+            const targetInner = document.getElementById(`card-${index}`);
+            // Prevent flipping matched or already flipped card
+            if (targetInner.classList.contains("flipped")) return;
+
+            // Flip card visually
+            targetInner.classList.add("flipped");
+            state.game.flippedCards.push(index);
+
+            if (state.game.flippedCards.length === 2) {
+                checkCardMatch();
+            }
+        }
+
+        function checkCardMatch() {
+            const firstIdx = state.game.flippedCards[0];
+            const secondIdx = state.game.flippedCards[1];
+
+            const card1 = state.game.cardsData[firstIdx];
+            const card2 = state.game.cardsData[secondIdx];
+
+            if (card1.id === card2.id) {
+                // MATCH
+                state.game.matchedCount += 2;
+                state.game.combo++;
+
+                // Score Formula: +120 per match, Double streak adds sequential +20 bonus points
+                const bonusPoints = (state.game.combo - 1) * 20;
+                const matchScore = 120 + bonusPoints;
+                state.game.score += matchScore;
+
+                document.getElementById("game-score-val").innerText = state.game.score;
+
+                // Show Combo Notification Toast
+                if (state.game.combo > 1) {
+                    const comboToast = document.getElementById("combo-popup");
+                    comboToast.innerText = `🔥 콤보 스트릭! +${bonusPoints}점`;
+                    comboToast.style.opacity = "1";
+                    setTimeout(() => { comboToast.style.opacity = "0"; }, 1200);
+                }
+
+                // Clear flip array
+                state.game.flippedCards = [];
+
+                // Check Win condition
+                if (state.game.matchedCount === 12) {
+                    setTimeout(() => {
+                        terminateCardGame(true);
+                    }, 800);
+                }
+            } else {
+                // MISMATCH
+                state.game.combo = 0; // Reset streak combo
+
+                setTimeout(() => {
+                    document.getElementById(`card-${firstIdx}`).classList.remove("flipped");
+                    document.getElementById(`card-${secondIdx}`).classList.remove("flipped");
+                    state.game.flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        function useItem(itemType) {
+            if (state.game.isPaused) return;
+
+            if (itemType === 'time') {
+                // Add 10 seconds item
+                state.game.timer += 10;
+                document.getElementById("game-timer-val").innerText = formatTimerText(state.game.timer);
+                alert("아이템 사용: 시간 +10초 추가 완료!");
+            } else if (itemType === 'reveal') {
+                // Temporarily flip all unmatched cards for 1.5 seconds
+                const unmatched = [];
+                state.game.cardsData.forEach((card, idx) => {
+                    const el = document.getElementById(`card-${idx}`);
+                    if (!el.classList.contains("flipped")) {
+                        el.classList.add("flipped");
+                        unmatched.push(el);
+                    }
+                });
+                alert("아이템 사용: 1.5초간 명화 카드 보기!");
+                setTimeout(() => {
+                    unmatched.forEach(el => el.classList.remove("flipped"));
+                }, 1500);
+            } else {
+                alert("아이템 사용: 점수 1.5배 부스터 방어막 가동!");
+            }
+        }
+
+        function onPauseClicked() {
+            state.game.isPaused = true;
+            document.getElementById("pause-modal").classList.remove("hidden");
+        }
+
+        function onResumeClicked() {
+            state.game.isPaused = false;
+            document.getElementById("pause-modal").classList.add("hidden");
+        }
+
+        function onPauseExitClicked() {
+            clearInterval(state.game.timerId);
+            document.getElementById("pause-modal").classList.add("hidden");
+            goToScreen("screen-main");
+        }
+
+        function terminateCardGame(isWin) {
+            clearInterval(state.game.timerId);
+
+            let finalScore = state.game.score;
+            if (isWin) {
+                // Bonus points: Remaining seconds * 10
+                const timeBonus = state.game.timer * 10;
+                finalScore += timeBonus;
+            }
+
+            // Sync score and update Coin (+250)
+            state.currentScore = finalScore;
+            state.currentCoin += 250;
+            syncCoins();
+
+            // Populate game over scoreboard elements
+            displayGameOverScoreboard(finalScore);
+
+            goToScreen("screen-game-over");
+
+            // Trigger Stamp slam animation
+            const stamp = document.getElementById("stamp-img");
+            stamp.classList.remove("animate-stamp", "opacity-0");
+            void stamp.offsetWidth; // Trigger reflow
+            stamp.classList.add("animate-stamp");
+        }
+
+        // --- 10. GAME OVER SCREEN ACTIONS ---
+        function displayGameOverScoreboard(userScore) {
+            document.getElementById("gameover-total-score").innerText = `${userScore.toLocaleString()}점`;
+
+            // Prepare sorting ranking (User vs Mock players inheriting exact character textures from Screen 4)
+            const ranks = [
+                { name: state.currentUser.id || "나", score: userScore, profile: state.currentUser.profile, isMe: true },
+                { name: "이영희", score: state.roomPlayers[1].score, profile: state.roomPlayers[1].profile, isMe: false },
+                { name: "김철수", score: state.roomPlayers[0].score, profile: state.roomPlayers[0].profile, isMe: false },
+                { name: "박민수", score: state.roomPlayers[2].score, profile: state.roomPlayers[2].profile, isMe: false }
+            ];
+
+            // Sort Descending
+            ranks.sort((a, b) => b.score - a.score);
+
+            const rankingContainer = document.getElementById("podium-ranking-list");
+            rankingContainer.innerHTML = "";
+
+            // Display Top 3 with dynamically matched textures
+            for(let i = 0; i < 3; i++) {
+                const r = ranks[i];
+                if (!r) break;
+
+                const medalBadge = i === 0 ? "1위.png" : i === 1 ? "2위.png" : "3위.png";
+                
+                const cardStyle = r.isMe 
+                    ? "border-amber-400 bg-amber-500/10 scale-[1.03] shadow-lg border-2" 
+                    : "border-slate-300 bg-slate-100/5 border";
+
+                rankingContainer.innerHTML += `
+                    <div class="flex items-center justify-between p-3 rounded-2xl ${cardStyle} transition-all duration-300">
+                        <div class="flex items-center gap-3">
+                            <!-- Medal Badge -->
+                            <img src="https://github.com/ahhyeon-jo/art_image_orgin/blob/main/${medalBadge}?raw=true" alt="순위" class="w-[50px] object-contain">
+                            
+                            <span class="text-[20px] font-black text-slate-800">${r.name} ${r.isMe ? '(나)' : ''}</span>
+                        </div>
+                        <span class="text-[24px] font-black text-indigo-700 font-mono pr-2">${r.score.toLocaleString()}점</span>
+                    </div>
+                `;
+            }
+        }
+
+        function triggerReactionEmoji() {
+            const emojis = ["🎉", "👍", "👏", "🔥", "🎨", "🌟", "😎", "🤩"];
+            const button = document.getElementById("btn-reaction");
+            const rect = button.getBoundingClientRect();
+
+            // Spawn 8 flying reaction icons
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement("div");
+                particle.className = "emoji-particle text-[45px]";
+                particle.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                // Random position offsets
+                const xOffset = (Math.random() - 0.5) * 150;
+                particle.style.left = `${rect.left + rect.width / 2 + xOffset}px`;
+                particle.style.top = `${rect.top}px`;
+                particle.style.animationDelay = `${Math.random() * 0.3}s`;
+
+                document.body.appendChild(particle);
+
+                // Garbage collect particle
+                setTimeout(() => {
+                    particle.remove();
+                }, 2000);
+            }
+        }
+
+        function resetAndReturnToMain() {
+            state.currentScore = 0;
+            goToScreen("screen-main");
+        }
+
+        // --- 11. TEACHER DASHBOARD LOGIC ---
+        function renderTeacherDashboard() {
+            const studentList = document.getElementById("teacher-student-list");
+            studentList.innerHTML = "";
+
+            state.roomPlayers.forEach(p => {
+                studentList.innerHTML += `
+                    <div class="flex items-center justify-between p-5 bg-slate-950/40 rounded-2xl border border-slate-700">
+                        <div class="flex items-center gap-4">
+                            <div class="w-[60px] h-[60px] rounded-full border-2 border-slate-500 overflow-hidden bg-slate-800">
+                                <img src="${p.profile}" alt="학생" class="w-full h-full object-cover">
+                            </div>
+                            <span class="text-[22px] font-extrabold text-slate-200">${p.name}</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-[18px] text-slate-400">최근 스코어: <strong class="text-indigo-400 font-mono">${p.score}</strong>점</span>
+                            <span class="px-4 py-1.5 rounded-full font-extrabold text-[16px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">탐험 완료</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function simulateActivitySheetsPrint() {
+            alert("인쇄용 심화 학습 워크시트 생성이 완료되었습니다!\n교사용 프린터 출력 팝업이 전송됩니다.");
+        }
+    </script>
+</body>
+</html>
